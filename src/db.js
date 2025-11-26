@@ -1,21 +1,19 @@
-import pg from "pg";
-import { config } from "./config.js";
+import pkg from "pg";
+const { Pool } = pkg;
 
-const { Pool } = pg;
-
-export const pool = new Pool({
-  connectionString: config.dbUrl,
-  max: 10,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false,  // REQUIRED FOR NEON + RENDER
+  },
 });
 
 export async function query(text, params) {
   const start = Date.now();
-  const res = await pool.query(text, params);
+  const result = await pool.query(text, params);
   const duration = Date.now() - start;
-  if (config.env !== "production") {
-    console.log("executed query", { text, duration, rows: res.rowCount });
-  }
-  return res;
+
+  console.log("executed query", { text, duration, rows: result.rowCount });
+
+  return result;
 }
